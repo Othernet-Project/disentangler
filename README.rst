@@ -3,7 +3,7 @@ disentangler
 ============
 
 Simple dependency tree builder, handles forward and reverse dependencies,
-returning an ordered tree with it's nodes ordered from root towards leafs.
+returning an ordered tree with its nodes ordered from root towards leafs.
 
 Example::
 
