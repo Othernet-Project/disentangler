@@ -21,7 +21,7 @@ class Disentangler(object):
         self._tree = tree
 
     def add(self, node_id, node):
-        """Add a new dependency to the mess.
+        """Add a new node to the not yet ordered tree.
 
         :param node_id: unique identifier of a dependency
                         (may be used by other dependencies to reference it)
