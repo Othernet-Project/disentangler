@@ -7,7 +7,6 @@ returning an ordered tree with it's nodes ordered from root towards leafs.
 
 Example::
 
-    >>> from collections import OrderedDict
     >>> from disentangler import Disentangler
     >>> inst = Disentangler.new()
     >>> inst.add('a', {})
