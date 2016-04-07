@@ -59,3 +59,13 @@ def test__order_nodes_missing_dependency():
     inst = mod.Disentangler(dep_tree)
     with pytest.raises(inst.UnresolvableDependency):
         inst._order_nodes()
+
+
+def test__required_by_all():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {}
+    dep_tree['c'] = {'required_by': '*'}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'a', 'b']

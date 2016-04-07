@@ -37,7 +37,12 @@ class Disentangler(object):
         """Turns reverse dependencies into forward dependencies over the whole
         tree."""
         for (node_id, node) in self._tree.items():
+            if node.get(self.REVERSE_KEY) == '*':
+                # Special case where some node is required by all
+                node[self.REVERSE_KEY] = [i for i in self._tree
+                                          if i != node_id]
             for dependent_id in node.pop(self.REVERSE_KEY, []):
+                print(node_id, dependent_id)
                 try:
                     dependent = self._tree[dependent_id]
                 except KeyError:
