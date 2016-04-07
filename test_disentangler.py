@@ -69,3 +69,13 @@ def test__required_by_all():
     inst = mod.Disentangler(dep_tree)
     ret = inst.solve()
     assert list(ret) == ['c', 'a', 'b']
+
+
+def test_required_by_all_multiple():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {'required_by': '*'}
+    dep_tree['c'] = {'required_by': '*'}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['b', 'c', 'a']
