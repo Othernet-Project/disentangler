@@ -98,4 +98,4 @@ def test_required_by_all_multiple():
     dep_tree['c'] = {'required_by': '*'}
     inst = mod.Disentangler(dep_tree)
     ret = inst.solve()
-    assert list(ret) == ['b', 'c', 'a']
+    assert list(ret) == ['c', 'b', 'a']
