@@ -37,6 +37,10 @@ class Disentangler(object):
         """Turns reverse dependencies into forward dependencies over the whole
         tree."""
         for (node_id, node) in self._tree.items():
+            if node.get(self.REVERSE_KEY) == '*':
+                # Special case where some node is required by all
+                node[self.REVERSE_KEY] = [i for i, n in self._tree.items()
+                                          if n.get(self.REVERSE_KEY) != '*']
             for dependent_id in node.pop(self.REVERSE_KEY, []):
                 try:
                     dependent = self._tree[dependent_id]
@@ -47,63 +51,64 @@ class Disentangler(object):
                     deps = dependent_deps + [node_id]
                     self._tree[dependent_id][self.FORWARD_KEY] = deps
 
-    def _collect_dependencies(self, node_id, collected=None):
-        """Recursively assemble the list of dependencies for the specified
-        node, including the node itself at the end.
+    def _get_forward_deps(self, node_id):
+        deps = self._tree[node_id].get(self.FORWARD_KEY, [])
+        if deps == '*':
+            deps = [i for i, n in self._tree.items()
+                    if n.get(self.FORWARD_KEY) != '*']
+            self._tree[node_id][self.FORWARD_KEY] = deps
+            return deps
+        return deps
 
-        :param node_id:   unique identifier of node which dependency list is
-                          being assembled
-        :param collected: param used only in recursive calls to collect all
-                          dependencies of ``node_id`` down to the root
+    def _get_ordered_nodes(self, met=None, unmet=None):
+        """ Return nodes IDs oredered to satisfy dependencies """
+        if unmet is None:
+            # This is our first run, so initialize the unmet dependecies to
+            # complete list of all nodes in the tree.
+            unmet = list(self._tree.keys())
+        if not unmet:
+            # There are no more unmet dependencies, so we are free to return
+            return met
 
-        For a sample tree:
+        met = met or []
+        still_unmet = []  # Deps that will still have unmet deps after the run
+        requested = []    # Depds which will be requested but not met
 
-        A -> [B, E]
-        B -> [D]
-        C -> []
-        D -> [E]
-        E -> []
+        for node_id in unmet:
+            deps = self._get_forward_deps(node_id)
+            # Filter out deps that are already met
+            deps = [d for d in deps if d not in met]
+            if not deps:
+                # This node either has no dependencies or all of its
+                # dpeendencies were met, so we can add it to the list of nodes
+                # with met dependencies.
+                met.append(node_id)
+                continue
+            if any(d not in unmet for d in deps):
+                # This node still has at least unmet dependency, but that
+                # dependecy is not even in the list of remaining nodes. This
+                # means we can never resolve this node's dependencies.
+                raise self.UnresolvableDependency(node_id)
+            # Dependencies are not met yet, so we are adding the node to the
+            # remaining nodes bucket.
+            still_unmet.append(node_id)
+            # Let's record the dependencies we have asked for
+            requested.extend([d for d in deps if d not in met])
 
-        Finding the dependencies of A would return:
-
-        [E, D, B, A]
-        """
-        if collected is None:
-            # to protect against circular dependencies towards the target node
-            # itself too, it must be added to the list initially
-            collected = collections.deque([node_id])
-        # collect dependencies of the node recursively
-        try:
-            node = self._tree[node_id]
-        except KeyError:
-            raise self.UnresolvableDependency(node_id)
-        else:
-            for dep_id in node.get(self.FORWARD_KEY, []):
-                if dep_id in collected:
-                    # one of the ancestor nodes already specified this node as
-                    # a dependency, and it turned out that this node has a
-                    # reference towards the ancestor node as well, which is a
-                    # circular dependency
-                    raise self.CircularDependency(node_id, dep_id)
-                # dependencies are prepended to the list, such that when
-                # iterating over the result, dependencies are ordered from
-                # lowest to highest, towards the target node
-                collected.appendleft(dep_id)
-                # collect child dependencies, prepending children the same way
-                self._collect_dependencies(dep_id, collected=collected)
-            return collected
+        if requested and set(requested) == set(still_unmet):
+            # If the unique node IDs that we asked for matches the unique node
+            # IDs that still have unmet dependencies, we are probably looking
+            # at circular dependency issue.
+            raise self.CircularDependency(requested)
+        return self._get_ordered_nodes(met, still_unmet)
 
     def _order_nodes(self):
-        """Build a new dependency tree ordered according to the forward
-        dependency specifications and replace the unordered tree with it."""
-        ordered_tree = collections.OrderedDict()
-        for node_id in self._tree:
-            # ``node_id`` will be included in the result set returned by
-            # ``_collect_dependencies``
-            for dep_id in self._collect_dependencies(node_id):
-                if dep_id not in ordered_tree:
-                    ordered_tree[dep_id] = self._tree[dep_id]
-        self._tree = ordered_tree
+        """ Order the nodes according to forward dependency relationships, and
+        update the tree """
+        new_tree = collections.OrderedDict()
+        for node_id in self._get_ordered_nodes():
+            new_tree[node_id] = self._tree[node_id]
+        self._tree = new_tree
 
     def solve(self):
         """Disentangle the graph by ordering nodes according to the specified

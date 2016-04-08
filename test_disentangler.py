@@ -51,6 +51,26 @@ def test__order_nodes_circular_dependency():
         inst._order_nodes()
 
 
+def test__order_nodes_overlapping_dependencies():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': ['c']}
+    dep_tree['b'] = {'depends_on': ['a', 'c']}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    inst._order_nodes()
+    assert list(inst._tree) == ['c', 'a', 'b']
+
+
+def test__order_nodes_multiple_deps_when_one_is_met_already():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': ['b', 'c']}
+    dep_tree['b'] = {'depends_on': ['c']}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    inst._order_nodes()
+    assert list(inst._tree) == ['c', 'b', 'a']
+
+
 def test__order_nodes_missing_dependency():
     dep_tree = mod.collections.OrderedDict()
     dep_tree['a'] = {'depends_on': ['b']}
@@ -59,3 +79,43 @@ def test__order_nodes_missing_dependency():
     inst = mod.Disentangler(dep_tree)
     with pytest.raises(inst.UnresolvableDependency):
         inst._order_nodes()
+
+
+def test__required_by_all():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {}
+    dep_tree['c'] = {'required_by': '*'}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'a', 'b']
+
+
+def test_required_by_all_multiple():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {'required_by': '*'}
+    dep_tree['c'] = {'required_by': '*'}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'b', 'a']
+
+
+def test_depends_on_all():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': '*'}
+    dep_tree['b'] = {}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['b', 'c', 'a']
+
+
+def test_depends_on_all_multiple():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': '*'}
+    dep_tree['b'] = {'depends_on': '*'}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'a', 'b']
