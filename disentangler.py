@@ -67,7 +67,9 @@ class Disentangler(object):
 
         for node_id in unmet:
             deps = self._tree[node_id].get(self.FORWARD_KEY, [])
-            if not deps or all(d in met for d in deps):
+            # Filter out deps that are already met
+            deps = [d for d in deps if d not in met]
+            if not deps:
                 # This node either has no dependencies or all of its
                 # dpeendencies were met, so we can add it to the list of nodes
                 # with met dependencies.
