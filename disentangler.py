@@ -51,6 +51,15 @@ class Disentangler(object):
                     deps = dependent_deps + [node_id]
                     self._tree[dependent_id][self.FORWARD_KEY] = deps
 
+    def _get_forward_deps(self, node_id):
+        deps = self._tree[node_id].get(self.FORWARD_KEY, [])
+        if deps == '*':
+            deps = [i for i, n in self._tree.items()
+                    if n.get(self.FORWARD_KEY) != '*']
+            self._tree[node_id][self.FORWARD_KEY] = deps
+            return deps
+        return deps
+
     def _get_ordered_nodes(self, met=None, unmet=None):
         """ Return nodes IDs oredered to satisfy dependencies """
         if unmet is None:
@@ -66,7 +75,7 @@ class Disentangler(object):
         requested = []    # Depds which will be requested but not met
 
         for node_id in unmet:
-            deps = self._tree[node_id].get(self.FORWARD_KEY, [])
+            deps = self._get_forward_deps(node_id)
             # Filter out deps that are already met
             deps = [d for d in deps if d not in met]
             if not deps:
