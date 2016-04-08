@@ -61,6 +61,16 @@ def test__order_nodes_overlapping_dependencies():
     assert list(inst._tree) == ['c', 'a', 'b']
 
 
+def test__order_nodes_multiple_deps_when_one_is_met_already():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': ['b', 'c']}
+    dep_tree['b'] = {'depends_on': ['c']}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    inst._order_nodes()
+    assert list(inst._tree) == ['c', 'b', 'a']
+
+
 def test__order_nodes_missing_dependency():
     dep_tree = mod.collections.OrderedDict()
     dep_tree['a'] = {'depends_on': ['b']}
