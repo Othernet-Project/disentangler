@@ -79,3 +79,21 @@ def test__order_nodes_missing_dependency():
     inst = mod.Disentangler(dep_tree)
     with pytest.raises(inst.UnresolvableDependency):
         inst._order_nodes()
+
+
+def test_pop_node():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    inst._order_nodes()
+    assert list(inst.solve()) == ['a', 'b', 'c']
+    inst.pop('a')
+    assert list(inst.solve()) == ['b', 'c']
+    inst.pop('b')
+    assert list(inst.solve()) == ['c']
+    inst.pop('c')
+    assert list(inst.solve()) == []
+
+

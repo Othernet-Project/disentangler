@@ -33,6 +33,12 @@ class Disentangler(object):
 
         self._tree[node_id] = node
 
+    def pop(self, node_id):
+        """
+        Remove a node from the tree.
+        """
+        self._tree.pop(node_id)
+
     def _invert_reverse_dependencies(self):
         """Turns reverse dependencies into forward dependencies over the whole
         tree."""
@@ -49,6 +55,8 @@ class Disentangler(object):
 
     def _get_ordered_nodes(self, met=None, unmet=None):
         """ Return nodes IDs oredered to satisfy dependencies """
+        if not self._tree:
+            return []
         if unmet is None:
             # This is our first run, so initialize the unmet dependecies to
             # complete list of all nodes in the tree.
