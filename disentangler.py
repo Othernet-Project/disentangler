@@ -1,21 +1,35 @@
 import collections
 
 
+class Error(Exception):
+    pass
+
+
+class DependencyAlreadyExists(Error):
+    pass
+
+
+class UnresolvableDependency(Error):
+    def __init__(self, deps, node_id):
+        self.deps = deps
+        self.node_id = node_id
+        self.msg = 'Could not satisfy {} for {}'.format(
+            ', '.join(deps), node_id)
+        super(UnresolvableDependency, self).__init__(self.msg)
+
+
+class CircularDependency(Error):
+    pass
+
+
 class Disentangler(object):
     FORWARD_KEY = 'depends_on'
     REVERSE_KEY = 'required_by'
 
-    class Error(Exception):
-        pass
-
-    class DependencyAlreadyExists(Error):
-        pass
-
-    class UnresolvableDependency(Error):
-        pass
-
-    class CircularDependency(Error):
-        pass
+    Error = Error
+    DependencyAlreadyExists = DependencyAlreadyExists
+    UnresolvableDependency = UnresolvableDependency
+    CircularDependency = CircularDependency
 
     def __init__(self, tree):
         self._tree = tree
@@ -47,7 +61,7 @@ class Disentangler(object):
                 try:
                     dependent = self._tree[dependent_id]
                 except KeyError:
-                    raise self.UnresolvableDependency(dependent_id)
+                    raise self.UnresolvableDependency([dependent_id], node_id)
                 else:
                     dependent_deps = dependent.get(self.FORWARD_KEY, [])
                     deps = dependent_deps + [node_id]
@@ -79,11 +93,12 @@ class Disentangler(object):
                 # with met dependencies.
                 met.append(node_id)
                 continue
-            if any(d not in unmet for d in deps):
+            missing = [d for d in deps if d not in unmet]
+            if missing:
                 # This node still has at least unmet dependency, but that
                 # dependecy is not even in the list of remaining nodes. This
                 # means we can never resolve this node's dependencies.
-                raise self.UnresolvableDependency(node_id)
+                raise self.UnresolvableDependency(missing, node_id)
             # Dependencies are not met yet, so we are adding the node to the
             # remaining nodes bucket.
             still_unmet.append(node_id)

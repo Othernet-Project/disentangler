@@ -77,8 +77,10 @@ def test__order_nodes_missing_dependency():
     dep_tree['b'] = {'depends_on': ['invalid']}
 
     inst = mod.Disentangler(dep_tree)
-    with pytest.raises(inst.UnresolvableDependency):
+    with pytest.raises(inst.UnresolvableDependency) as exc:
         inst._order_nodes()
+        assert exc.deps == ['invalid']
+        assert exc.node_id == 'b'
 
 
 def test_pop_node():
@@ -95,5 +97,3 @@ def test_pop_node():
     assert list(inst.solve()) == ['c']
     inst.pop('c')
     assert list(inst.solve()) == []
-
-
