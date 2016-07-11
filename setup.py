@@ -8,7 +8,7 @@ def read(fname):
 
 
 NAME = 'disentangler'
-VERSION = '1.0.dev1'
+VERSION = '1.0'
 
 setup(
     name=NAME,
@@ -18,7 +18,7 @@ setup(
     long_description=read('README.rst'),
     url='https://github.com/Outernet-Project/disentangler',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
