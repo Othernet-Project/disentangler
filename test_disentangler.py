@@ -97,3 +97,43 @@ def test_pop_node():
     assert list(inst.solve()) == ['c']
     inst.pop('c')
     assert list(inst.solve()) == []
+
+
+def test__required_by_all():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {}
+    dep_tree['c'] = {'required_by': '*'}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'a', 'b']
+
+
+def test_required_by_all_multiple():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {}
+    dep_tree['b'] = {'required_by': '*'}
+    dep_tree['c'] = {'required_by': '*'}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'b', 'a']
+
+
+def test_depends_on_all():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': '*'}
+    dep_tree['b'] = {}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['b', 'c', 'a']
+
+
+def test_depends_on_all_multiple():
+    dep_tree = mod.collections.OrderedDict()
+    dep_tree['a'] = {'depends_on': '*'}
+    dep_tree['b'] = {'depends_on': '*'}
+    dep_tree['c'] = {}
+    inst = mod.Disentangler(dep_tree)
+    ret = inst.solve()
+    assert list(ret) == ['c', 'a', 'b']
