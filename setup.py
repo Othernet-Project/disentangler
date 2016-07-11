@@ -8,7 +8,7 @@ def read(fname):
 
 
 NAME = 'disentangler'
-VERSION = '0.1'
+VERSION = '1.0.dev1'
 
 setup(
     name=NAME,
