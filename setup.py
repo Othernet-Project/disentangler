@@ -15,6 +15,7 @@ setup(
     version=VERSION,
     license='GPLv3',
     py_modules=[NAME],
+    description='Simple dependency tree builder, handles forward and reverse dependencies',
     long_description=read('README.rst'),
     url='https://github.com/Outernet-Project/disentangler',
     classifiers=[
